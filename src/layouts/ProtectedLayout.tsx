@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { LogOut, Bot, LayoutDashboard } from 'lucide-react';
+import { LogOut } from 'lucide-react';
+import { useAuth } from '../context/authContext';
 
 export default function ProtectedLayout() {
   const { logout, user } = useAuth();
@@ -27,14 +27,14 @@ export default function ProtectedLayout() {
               </Link>
 
               {/* Links de Navegação */}
-              <div className="hidden sm:flex sm:space-x-8">
+              {/* <div className="hidden sm:flex sm:space-x-8">
                 <Link to="/dashboard" className="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-indigo-500 text-sm font-medium">
                   Dashboard
                 </Link>
                 <Link to="/bots" className="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium">
                   My Bots
                 </Link>
-              </div>
+              </div> */}
             </div>
 
             {/* Perfil e Logout */}

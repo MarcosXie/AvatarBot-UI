@@ -1,9 +1,9 @@
 // src/components/RobotControl.tsx
 import { useState, useEffect } from 'react';
-import { api } from '../services/api';
-import { Wifi, Cpu, Activity } from 'lucide-react'; // Ícones opcionais para o log
-import { useChat } from '../context/chatContext';
+import { robotService } from '../services/robotService'; // <--- Importação nova
+import { Wifi, Cpu, Activity } from 'lucide-react';
 import type { SignalRMessage, TelemetryData } from '../types';
+import { useChat } from '../context/chatContext';
 
 interface LogEntry {
   time: Date;
@@ -26,8 +26,9 @@ export default function RobotControl({ thingCode = "ExpoBot_Felipe" }: RobotCont
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [telemetry, setTelemetry] = useState<TelemetryData | null>(null);
 
+  // Conexão SignalR via RobotService
   useEffect(() => {
-    const connection = api.createSignalRConnection(thingCode);
+    const connection = robotService.createSignalRConnection(thingCode);
 
     connection.start()
       .then(() => addLog("✅ Conectado ao Hub SignalR", "success"))
@@ -47,7 +48,9 @@ export default function RobotControl({ thingCode = "ExpoBot_Felipe" }: RobotCont
         setConnectionStatus(prev => ({ ...prev, robot: true }));
       }
       else if (msg.type === "speed_update" && msg.data) {
-        if(msg.data.source === "ps2_controller") setSpeed(msg.data.speed);
+        // Tipagem defensiva para msg.data
+        const data = msg.data as any; 
+        if(data.source === "ps2_controller") setSpeed(data.speed);
       }
     });
 
@@ -60,16 +63,20 @@ export default function RobotControl({ thingCode = "ExpoBot_Felipe" }: RobotCont
     setLogs(prev => [{ time: new Date(), text, type }, ...prev].slice(0, 50));
   };
 
+  // Envio de comando via RobotService
   const handleCommand = async (cmd: string) => {
     addLog(`📤 ${cmd}`, "info");
+    
+    // O callApi dentro do service já trata o erro visual (Toast)
+    // Mas mantemos o try/catch aqui para o log do terminal
     try {
-      await api.sendCommand(thingCode, cmd, speed);
+      await robotService.sendCommand(thingCode, cmd, speed);
     } catch (error) {
       addLog("❌ Falha envio", "error");
     }
   };
 
-  // Mapeamento de botões com labels
+  // Mapeamento de botões
   const controls = [
     { id: 'Q', label: 'Girar Esq.', cmd: 'STRAFE_LEFT', icon: '↖️' },
     { id: 'W', label: 'Frente', cmd: 'FORWARD', icon: '⬆️' },
@@ -161,13 +168,13 @@ export default function RobotControl({ thingCode = "ExpoBot_Felipe" }: RobotCont
         <div className="grid grid-cols-3 gap-3 max-w-[320px] mx-auto">
           {/* Linha 1 */}
           <ControlButton btn={controls[0]} onClick={handleCommand} />
-          <ControlButton btn={controls[1]} onClick={handleCommand}  />
+          <ControlButton btn={controls[1]} onClick={handleCommand} />
           <ControlButton btn={controls[2]} onClick={handleCommand} />
 
           {/* Linha 2 */}
-          <ControlButton btn={controls[3]} onClick={handleCommand}  />
-          <ControlButton btn={controls[6]} onClick={handleCommand} danger /> {/* STOP no meio */}
-          <ControlButton btn={controls[5]} onClick={handleCommand}  />
+          <ControlButton btn={controls[3]} onClick={handleCommand} />
+          <ControlButton btn={controls[6]} onClick={handleCommand} danger /> {/* STOP */}
+          <ControlButton btn={controls[5]} onClick={handleCommand} />
 
           {/* Linha 3 */}
           <div className="invisible"></div>
@@ -195,20 +202,19 @@ export default function RobotControl({ thingCode = "ExpoBot_Felipe" }: RobotCont
   );
 }
 
-// Subcomponente para o botão
-function ControlButton({ btn, onClick, primary, danger }: any) {
+// Subcomponente ControlButton (já com estilo unificado)
+function ControlButton({ btn, onClick, danger }: any) {
   return (
     <button
       onMouseDown={() => onClick(btn.cmd)}
-      onMouseUp={() => btn.cmd !== 'STOP' && onClick('STOP')} // Auto-stop ao soltar
+      onMouseUp={() => btn.cmd !== 'STOP' && onClick('STOP')}
       className={`
         relative h-20 rounded-xl transition-all duration-100 flex flex-col items-center justify-center
+        shadow-lg active:scale-95 active:shadow-none
         ${danger 
           ? 'bg-red-500 hover:bg-red-600 text-white shadow-red-200' 
-          : primary 
-            ? 'bg-gradient-to-br from-indigo-500 to-purple-600 hover:to-purple-700 text-white shadow-indigo-200' 
-            : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'}
-        shadow-lg active:scale-95 active:shadow-none
+          : 'bg-gradient-to-br from-indigo-500 to-purple-600 hover:to-purple-700 text-white shadow-indigo-200' 
+        }
       `}
     >
       <span className="text-2xl mb-1">{btn.icon}</span>
