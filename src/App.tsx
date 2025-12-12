@@ -1,43 +1,45 @@
-// src/App.tsx
-import { useState } from 'react';
-import RobotControl from './components/RobotControl';
-import VideoCall from './components/VideoCall';
-import Lobby from './components/Lobby';
-import { ChatProvider } from './context/ChatContext';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-function App() {
-  const [roomUrl, setRoomUrl] = useState<string | null>(null);
-  
-  // Em um sistema real, isso viria do Lobby ou de uma rota
-  const [thingCode] = useState<string>("ExpoBot_Felipe"); 
+import ProtectedLayout from './layouts/ProtectedLayout';
+import HomePublic from './pages/HomePublic';
+import Login from './pages/Login';
+import Register from './pages/Login';
+import BotList from './pages/BotList';
+import BotRoom from './pages/BotRoom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import type { JSX } from 'react';
 
-  if (!roomUrl) {
-    return <Lobby onJoin={(url) => setRoomUrl(url)} />;
-  }
-
-  return (
-    <ChatProvider>
-      {/* MUDANÇAS DE RESPONSIVIDADE AQUI:
-          1. flex-col: Padrão (Mobile) -> Itens um embaixo do outro
-          2. lg:flex-row: Desktop (Large screens) -> Itens lado a lado
-      */}
-      <div className="flex flex-col lg:flex-row h-screen w-screen bg-gray-100 overflow-hidden">
-        
-        {/* Painel de Vídeo:
-            - Mobile: flex-1 (Ocupa o espaço que sobrar verticalmente)
-            - min-h-[40vh]: Garante que o vídeo não suma se o teclado abrir no celular
-        */}
-        <div className="flex-1 bg-black relative min-h-[40vh]">
-          <VideoCall roomUrl={roomUrl} onLeave={() => setRoomUrl(null)} />
-        </div>
-
-        <div className="w-full h-[50vh] lg:w-[600px] lg:h-full border-t lg:border-t-0 lg:border-l border-gray-300">
-          <RobotControl thingCode={thingCode} />
-        </div>
-        
-      </div>
-    </ChatProvider>
-  );
+// Componente para proteger rotas
+function PrivateRoute({ children }: { children: JSX.Element }) {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? children : <Navigate to="/login" />;
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HomePublic />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          <Route element={<PrivateRoute><ProtectedLayout /></PrivateRoute>}>
+            <Route path="/dashboard" element={<Navigate to="/bots" replace />} />
+            <Route path="/bots" element={<BotList />} />
+          </Route>
+
+          <Route 
+            path="/room/:thingCode" 
+            element={
+              <PrivateRoute>
+                <BotRoom />
+              </PrivateRoute>
+            } 
+          />
+
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
