@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.btn-ctrl {
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 1.5rem;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s;
+  background-color: #e5e7eb; /* cor cinza padrão */
+}
+.btn-ctrl:active {
+  transform: scale(0.95);
+}
