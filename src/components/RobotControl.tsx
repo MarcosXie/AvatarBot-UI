@@ -210,16 +210,19 @@ function ControlButton({ btn, onClick, danger }: any) {
       onMouseUp={() => btn.cmd !== 'STOP' && onClick('STOP')}
       className={`
         relative h-20 rounded-xl transition-all duration-100 flex flex-col items-center justify-center
-        shadow-lg active:scale-95 active:shadow-none
+        shadow-md active:scale-95 active:shadow-none border
         ${danger 
-          ? 'bg-red-500 hover:bg-red-600 text-white shadow-red-200' 
-          : 'bg-gradient-to-br from-indigo-500 to-purple-600 hover:to-purple-700 text-white shadow-indigo-200' 
+          /* Estilo do botão STOP (Vermelho) */
+          ? 'bg-red-500 hover:bg-red-600 text-white border-red-500 shadow-red-200' 
+          
+          /* Estilo dos outros botões (Branco) */
+          : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-200' 
         }
       `}
     >
       <span className="text-2xl mb-1">{btn.icon}</span>
       <span className="text-[10px] font-bold uppercase tracking-wide opacity-80">{btn.label}</span>
-      <span className="absolute top-1 right-2 text-[8px] opacity-50">{btn.id}</span>
+      <span className="absolute top-1 right-2 text-[8px] opacity-30">{btn.id}</span>
     </button>
   );
 }

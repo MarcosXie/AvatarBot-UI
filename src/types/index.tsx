@@ -35,3 +35,11 @@ export interface ChatMessage {
   timestamp: Date;
   isLocal: boolean;
 }
+
+export interface BotListItem {
+  id: string; // GUID do banco
+  name: string;
+  code: string; // O "ThingCode" (ex: ExpoBot_Felipe)
+  active: boolean;
+  awsThingName: string;
+}
