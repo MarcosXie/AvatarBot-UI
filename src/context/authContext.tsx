@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import { jwtDecode } from 'jwt-decode';
 import { clearToken, getToken, setToken as saveTokenHelper } from '../helpers/UserHelper';
 
-// ... (Interfaces JwtPayload e User continuam iguais) ...
+// 1. ADICIONADO: isAdmin na tipagem do payload do Token
 interface JwtPayload {
   id: string;
   sub?: string;
@@ -10,6 +10,7 @@ interface JwtPayload {
   unique_name?: string;
   email?: string;
   name?: string;
+  isAdmin?: string; // <--- O backend manda como string "true" ou "false"
   "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"?: string;
   "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"?: string;
 }
@@ -18,6 +19,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  isAdmin: boolean; // <--- Melhor tipar como boolean estrito para facilitar if(user.isAdmin)
 }
 
 interface AuthContextType {
@@ -35,7 +37,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   
-  // === NOVO ESTADO: Começa true para bloquear a renderização inicial ===
   const [isLoading, setIsLoading] = useState(true); 
 
   const decodeAndSetUser = (accessToken: string) => {
@@ -53,11 +54,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                        decoded.unique_name || 
                        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || 
                        "Usuário";
+                       
       const userEmail = decoded.email || 
                         decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] || 
                         "";
 
-      setUser({ id: userId, name: userName, email: userEmail });
+      // 2. ALTERADO: Lógica para extrair e converter o isAdmin
+      // O backend manda "true" (string), aqui convertemos para boolean real
+      const rawIsAdmin = decoded.isAdmin; 
+      const isUserAdmin = String(rawIsAdmin).toLowerCase() === 'true';
+
+      setUser({ 
+        id: userId, 
+        name: userName, 
+        email: userEmail,
+        isAdmin: isUserAdmin // <--- Agora o user tem o dado correto
+      });
+      
       setToken(accessToken);
       
     } catch (error) {
@@ -73,8 +86,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       decodeAndSetUser(storedToken);
     }
     
-    // === O PULO DO GATO ===
-    // Avisamos que o carregamento terminou, independente se achou token ou não
     setIsLoading(false); 
   }, []);
 
@@ -89,9 +100,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
-  // === BLOQUEIO DE RENDERIZAÇÃO ===
-  // Se estiver carregando, mostra um spinner ou tela branca
-  // Isso impede que o PrivateRoute redirecione antes da hora
   if (isLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-gray-100">
