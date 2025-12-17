@@ -40,6 +40,16 @@ export interface BotListItem {
   id: string; // GUID do banco
   name: string;
   code: string; // O "ThingCode" (ex: ExpoBot_Felipe)
+  isBotCallAvailable: boolean;
+  active: boolean;
+  awsThingName: string;
+}
+
+export interface BotResponse {
+  id: string; 
+  name: string;
+  code: string; 
+  roomUrl: string; 
   active: boolean;
   awsThingName: string;
 }

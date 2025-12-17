@@ -11,19 +11,63 @@ export default function BotList() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // 1. Carrega imediatamente ao montar
     fetchBots();
+
+    // 2. Configura o intervalo de 10 segundos (10000 ms)
+    const intervalId = setInterval(() => {
+      fetchBots(true); // Passa true para indicar que é refresh em background
+    }, 10000);
+
+    // 3. Limpa o intervalo quando o componente desmontar (para não vazar memória)
+    return () => clearInterval(intervalId);
   }, [user]);
 
-  const fetchBots = async () => {
+  // Adicionei o parametro 'isBackground' para não mostrar o spinner rodando sozinho a cada 10s
+  const fetchBots = async (isBackground = false) => {
     if (!user?.id) return;
     
-    setIsLoading(true);
-    const data = await robotService.getBotsByUserId(user.id);
+    // Só ativa o loading se NÃO for background (primeira carga ou clique manual)
+    if (!isBackground) setIsLoading(true);
     
-    if (data) {
-      setBots(data);
+    try {
+      const data = await robotService.getBotsByUserId(user.id);
+      if (data) {
+        setBots(data);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar bots:", error);
+    } finally {
+      if (!isBackground) setIsLoading(false);
     }
-    setIsLoading(false);
+  };
+
+  // Lógica de visualização do Status
+  const getStatusDisplay = (bot: BotListItem) => {
+    // 1. Prioridade: Se não estiver ativo (Disabled)
+    if (!bot.active) {
+      return {
+        label: 'DISABLED',
+        className: 'bg-red-100 text-red-600 border-red-200',
+        dotColor: 'bg-red-500'
+      };
+    }
+
+    // 2. Se ativo e disponível para chamada (Online)
+    if (bot.isBotCallAvailable) {
+      return {
+        label: 'ONLINE',
+        className: 'bg-green-100 text-green-700 border-green-200',
+        dotColor: 'bg-green-500 animate-pulse'
+      };
+    }
+
+    // 3. Se ativo mas sem vídeo (Offline)
+    return {
+      label: 'OFFLINE',
+      className: 'bg-gray-100 text-gray-500 border-gray-200',
+      dotColor: 'bg-gray-400'
+    };
   };
 
   return (
@@ -31,7 +75,7 @@ export default function BotList() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Meus Dispositivos</h1>
         <button 
-          onClick={fetchBots} 
+          onClick={() => fetchBots(false)} // Clique manual mostra o loading
           className="p-2 text-gray-500 hover:text-indigo-600 transition-colors"
           title="Atualizar lista"
         >
@@ -39,7 +83,7 @@ export default function BotList() {
         </button>
       </div>
       
-      {isLoading ? (
+      {isLoading && bots.length === 0 ? (
         <div className="text-center py-10 text-gray-500">Carregando dispositivos...</div>
       ) : bots.length === 0 ? (
         <div className="text-center py-10 bg-white rounded-xl shadow-sm border border-gray-200">
@@ -48,38 +92,42 @@ export default function BotList() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {bots.map(bot => (
-            // IMPORTANTE: O link usa bot.code (ThingCode) e não o GUID, 
-            // pois é isso que o MQTT precisa para conectar.
-            <Link key={bot.id} to={`/room/${bot.awsThingName}`} className="block group">
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer relative overflow-hidden">
-                
-                {/* Indicador de Ativo no Banco (opcional) */}
-                <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl ${bot.active ? 'from-green-100' : 'from-gray-100'} to-transparent rounded-bl-full -mr-8 -mt-8 opacity-50`}></div>
+          {bots.map(bot => {
+            const status = getStatusDisplay(bot);
 
-                <div className="flex justify-between items-start mb-4 relative">
-                  <div className="p-3 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                    <Bot className="text-indigo-600" size={24} />
+            return (
+              // Mantive o bot.code aqui para garantir o link correto com o MQTT/Sala
+              <Link key={bot.id} to={`/room/${bot.id}`} className="block group">
+                <div className={`bg-white p-6 rounded-xl shadow-sm border transition-all cursor-pointer relative overflow-hidden
+                  ${!bot.active ? 'opacity-75 bg-gray-50' : 'hover:shadow-md hover:border-indigo-300 border-gray-200'}
+                `}>
+                  
+                  {/* Header do Card */}
+                  <div className="flex justify-between items-start mb-4">
+                    <div className={`p-3 rounded-lg transition-colors ${!bot.active ? 'bg-gray-200' : 'bg-indigo-50 group-hover:bg-indigo-100'}`}>
+                      <Bot className={!bot.active ? 'text-gray-400' : 'text-indigo-600'} size={24} />
+                    </div>
+                    
+                    {/* Badge de Status Parametrizado */}
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${status.className}`}>
+                      <div className={`w-2 h-2 rounded-full ${status.dotColor}`} />
+                      {status.label}
+                    </span>
                   </div>
                   
-                  {/* Placeholder de Status Online/Offline (Mockado por enquanto) */}
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-500">
-                    OFFLINE
-                  </span>
+                  <h3 className="text-lg font-bold text-gray-800 mb-1">{bot.name}</h3>
+                  <p className="text-xs text-gray-500 mb-4 font-mono bg-gray-100 inline-block px-2 py-1 rounded">
+                    {bot.code}
+                  </p>
+                  
+                  <div className="flex items-center gap-4 text-sm text-gray-400">
+                    <span className="flex items-center gap-1"><Wifi size={14}/> --</span>
+                    <span className="flex items-center gap-1"><Battery size={14}/> --</span>
+                  </div>
                 </div>
-                
-                <h3 className="text-lg font-bold text-gray-800 mb-1">{bot.name}</h3>
-                <p className="text-xs text-gray-500 mb-4 font-mono bg-gray-50 inline-block px-2 py-1 rounded">
-                  {bot.code}
-                </p>
-                
-                <div className="flex items-center gap-4 text-sm text-gray-400">
-                  <span className="flex items-center gap-1"><Wifi size={14}/> --</span>
-                  <span className="flex items-center gap-1"><Battery size={14}/> --</span>
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

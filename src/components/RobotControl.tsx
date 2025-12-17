@@ -1,7 +1,8 @@
 // src/components/RobotControl.tsx
 import { useState, useEffect } from 'react';
-import { robotService } from '../services/robotService'; // <--- Importação nova
-import { Wifi, Cpu, Activity } from 'lucide-react';
+import { robotService } from '../services/robotService';
+// Adicionamos Copy, Check e Video aos imports
+import { Wifi, Cpu, Activity, Copy, Check, Video } from 'lucide-react';
 import type { SignalRMessage, TelemetryData } from '../types';
 import { useChat } from '../context/chatContext';
 
@@ -13,9 +14,10 @@ interface LogEntry {
 
 interface RobotControlProps {
   thingCode?: string;
+  roomUrl?: string | null; // <--- Nova Prop
 }
 
-export default function RobotControl({ thingCode = "ExpoBot_Felipe" }: RobotControlProps) {
+export default function RobotControl({ thingCode = "ExpoBot_Felipe", roomUrl }: RobotControlProps) {
   const { isChatOpen } = useChat();
   
   const [connectionStatus, setConnectionStatus] = useState({
@@ -25,6 +27,18 @@ export default function RobotControl({ thingCode = "ExpoBot_Felipe" }: RobotCont
   const [speed, setSpeed] = useState<number>(200);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [telemetry, setTelemetry] = useState<TelemetryData | null>(null);
+  
+  // Estado para o feedback visual do botão copiar
+  const [copied, setCopied] = useState(false);
+
+  // Função para copiar URL
+  const handleCopyUrl = () => {
+    if (roomUrl) {
+      navigator.clipboard.writeText(roomUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   // Conexão SignalR via RobotService
   useEffect(() => {
@@ -48,7 +62,6 @@ export default function RobotControl({ thingCode = "ExpoBot_Felipe" }: RobotCont
         setConnectionStatus(prev => ({ ...prev, robot: true }));
       }
       else if (msg.type === "speed_update" && msg.data) {
-        // Tipagem defensiva para msg.data
         const data = msg.data as any; 
         if(data.source === "ps2_controller") setSpeed(data.speed);
       }
@@ -66,9 +79,6 @@ export default function RobotControl({ thingCode = "ExpoBot_Felipe" }: RobotCont
   // Envio de comando via RobotService
   const handleCommand = async (cmd: string) => {
     addLog(`📤 ${cmd}`, "info");
-    
-    // O callApi dentro do service já trata o erro visual (Toast)
-    // Mas mantemos o try/catch aqui para o log do terminal
     try {
       await robotService.sendCommand(thingCode, cmd, speed);
     } catch (error) {
@@ -111,6 +121,43 @@ export default function RobotControl({ thingCode = "ExpoBot_Felipe" }: RobotCont
         </h1>
         <p className="text-gray-500 text-sm">Sistema via AWS IoT Core</p>
       </div>
+
+      {/* --- NOVO: Painel de Link da Sala --- */}
+      {roomUrl && (
+        <div className="bg-white rounded-xl shadow-sm p-3 mb-6 border border-indigo-100">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="bg-indigo-100 p-2 rounded-full flex-shrink-0">
+                <Video size={18} className="text-indigo-600" />
+              </div>
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                  Link da Chamada
+                </span>
+                <span className="text-xs text-gray-700 truncate font-mono">
+                  {roomUrl}
+                </span>
+              </div>
+            </div>
+            
+            <button 
+              onClick={handleCopyUrl}
+              className={`p-2 rounded-lg transition-all border ${
+                copied 
+                  ? 'bg-green-50 border-green-200 text-green-600' 
+                  : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+              }`}
+              title="Copiar Link para compartilhar"
+            >
+              {copied ? <Check size={18}/> : <Copy size={18}/>}
+            </button>
+          </div>
+          <p className="text-[10px] text-center text-gray-400 mt-2">
+            Copie e envie para convidados entrarem na sala.
+          </p>
+        </div>
+      )}
+      {/* ------------------------------------ */}
 
       {/* Status Panel */}
       <div className="bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-200">
@@ -212,10 +259,7 @@ function ControlButton({ btn, onClick, danger }: any) {
         relative h-20 rounded-xl transition-all duration-100 flex flex-col items-center justify-center
         shadow-md active:scale-95 active:shadow-none border
         ${danger 
-          /* Estilo do botão STOP (Vermelho) */
           ? 'bg-red-500 hover:bg-red-600 text-white border-red-500 shadow-red-200' 
-          
-          /* Estilo dos outros botões (Branco) */
           : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-200' 
         }
       `}

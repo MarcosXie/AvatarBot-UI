@@ -44,7 +44,7 @@ export default function App() {
           </Route>
 
           <Route 
-            path="/room/:thingCode" 
+            path="/room/:id" 
             element={
               <PrivateRoute>
                 <BotRoom />
