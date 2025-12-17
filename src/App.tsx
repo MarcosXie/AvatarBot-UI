@@ -16,7 +16,8 @@ import BotList from './pages/BotList';
 import BotRoom from './pages/BotRoom';
 
 // Pages - Admin
-import AdminLogin from './pages/AdminLogin'; // Nova página
+import AdminLogin from './pages/admin/AdminLogin'; // Nova página
+import AdminDevices from './pages/admin/AdminDevices';
 
 // Componente para proteger rotas de USER
 function PrivateRoute({ children }: { children: JSX.Element }) {
@@ -62,6 +63,7 @@ export default function App() {
           {/* === ÁREA ADMINISTRATIVA (Protegida por Claim) === */}
           <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
             {/* Redireciona raiz do admin para dashboard */}
+            <Route path="/admin/devices" element={<AdminDevices />} />
             <Route path="/admin/dashboard" element={
                 // Crie um componente AdminDashboard simples depois
                 <div className="text-center mt-20">

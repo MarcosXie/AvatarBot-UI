@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Lock, Mail, Loader2 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { adminService } from '../services/adminService';
-import { useAuth } from '../context/authContext';
+import { adminService } from '../../services/adminService';
+import { useAuth } from '../../context/authContext';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ export default function AdminLogin() {
         
         // 3. Redireciona para área admin
         toast.success("Acesso administrativo concedido.");
-        navigate('/admin/dashboard');
+        navigate('/admin/devices');
       }
     } catch (error) {
       console.error(error);

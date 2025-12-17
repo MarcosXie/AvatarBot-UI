@@ -1,5 +1,6 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { LogOut, ShieldCheck, LayoutDashboard } from 'lucide-react';
+// 1. ADICIONEI O ÍCONE 'Bot' AQUI NA IMPORTAÇÃO
+import { LogOut, ShieldCheck, LayoutDashboard, Bot } from 'lucide-react';
 import { useAuth } from '../context/authContext';
 
 export default function AdminLayout() {
@@ -28,14 +29,17 @@ export default function AdminLayout() {
 
               {/* Links de Navegação */}
               <div className="hidden sm:flex sm:space-x-8">
+ 
+
+                {/* 2. ADICIONEI O LINK PARA DEVICES AQUI */}
                 <Link 
-                  to="/admin/dashboard" 
+                  to="/admin/devices" 
                   className="text-slate-300 hover:text-white hover:bg-slate-800 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors"
                 >
-                  <LayoutDashboard size={18} />
-                  Painel Geral
+                  <Bot size={18} />
+                  Devices
                 </Link>
-                {/* Futuros links: Gerenciar Usuários, Logs, etc */}
+                
               </div>
             </div>
 
