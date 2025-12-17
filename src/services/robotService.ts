@@ -38,5 +38,12 @@ export const robotService = {
     return await callApi<BotResponse>(async () => 
       await api.get(`/api/Bot/${id}`)
     );
+  },
+
+  redeemBot: async (redeemCode: string, userId: string) => {
+    // POST /api/Bot/redeem/{redeemCode}/{userId}
+
+    return await api.post(`/api/Bot/redeem/${redeemCode}/${userId}`)
+
   }
 };
