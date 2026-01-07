@@ -1,6 +1,6 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 // 1. ADICIONEI O ÍCONE 'Bot' AQUI NA IMPORTAÇÃO
-import { LogOut, ShieldCheck, LayoutDashboard, Bot } from 'lucide-react';
+import { LogOut, ShieldCheck, Bot } from 'lucide-react';
 import { useAuth } from '../context/authContext';
 
 export default function AdminLayout() {

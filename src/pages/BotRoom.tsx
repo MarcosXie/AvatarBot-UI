@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import RobotControl from '../components/RobotControl';
 import VideoCall from '../components/VideoCall';
 import { ArrowLeft, RefreshCw, Loader2, VideoOff } from 'lucide-react';
@@ -16,7 +16,7 @@ export default function BotRoom() {
   const [bot, setBot] = useState<BotResponse | undefined>(undefined);
   const [error, setError] = useState('');
 
-  // Função para buscar o status da sala
+  // Function to fetch room status
   const checkRoomStatus = async () => {
     if (!id) return;
     
@@ -27,7 +27,6 @@ export default function BotRoom() {
       const bot = await robotService.getById(id);
       setBot(bot)
 
-
       if (bot && bot.roomUrl) {
         setRoomUrl(bot.roomUrl);
       } else {
@@ -35,13 +34,13 @@ export default function BotRoom() {
       }
     } catch (err) {
       console.error(err);
-      setError('Erro ao buscar dados do robô.');
+      setError('Error fetching robot data.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Busca inicial ao carregar a página
+  // Initial fetch on page load
   useEffect(() => {
     checkRoomStatus();
     
@@ -52,17 +51,17 @@ export default function BotRoom() {
     return () => clearInterval(intervalId);
   }, [bot?.awsThingName]);
 
-  // --- ESTADO 1: CARREGANDO ---
+  // --- STATE 1: LOADING ---
   if (isLoading && !roomUrl) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-gray-900 text-white flex-col gap-4">
         <Loader2 className="animate-spin text-indigo-500" size={48} />
-        <p>Verificando status do {bot?.code}...</p>
+        <p>Checking status of {bot?.code}...</p>
       </div>
     );
   }
 
-  // --- ESTADO 2: SALA NÃO INICIADA (ROBÔ OFFLINE DO VÍDEO) ---
+  // --- STATE 2: ROOM NOT STARTED (ROBOT VIDEO OFFLINE) ---
   if (!roomUrl) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-gray-100 p-4">
@@ -71,10 +70,10 @@ export default function BotRoom() {
             <VideoOff className="text-gray-400" size={40} />
           </div>
           
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Vídeo Indisponível</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Video Unavailable</h2>
           <p className="text-gray-500 mb-8">
-            O robô <strong>{bot?.code}</strong> ainda não iniciou a transmissão de vídeo.
-            Peça para alguém iniciar o app no robô.
+            The robot <strong>{bot?.code}</strong> has not started the video stream yet.
+            Please ask someone to start the app on the robot.
           </p>
 
           <div className="flex flex-col gap-3">
@@ -82,15 +81,15 @@ export default function BotRoom() {
               onClick={checkRoomStatus} 
               className="flex items-center justify-center gap-2 w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-all"
             >
-              <RefreshCw size={20} /> Verificar Novamente
+              <RefreshCw size={20} /> Check Again
             </button>
             
-            <Link 
-              to="/bots" 
+            <button 
+              onClick={() => navigate(-1)} // -1 volta exatamente para a página anterior no histórico
               className="flex items-center justify-center gap-2 w-full bg-white border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-all"
             >
-              <ArrowLeft size={20} /> Voltar para Lista
-            </Link>
+              <ArrowLeft size={20} /> Back to Previous Page
+            </button>
           </div>
           
           {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
@@ -99,38 +98,38 @@ export default function BotRoom() {
     );
   }
 
-  // --- ESTADO 3: SALA ATIVA (INTERFACE COMPLETA) ---
+  // --- STATE 3: ACTIVE ROOM (FULL INTERFACE) ---
   return (
     <ChatProvider>
       <div className="flex flex-col lg:flex-row h-screen w-screen bg-gray-100 overflow-hidden">
         
-        {/* Painel de Vídeo */}
+        {/* Video Panel */}
         <div className="flex-1 bg-black relative min-h-[40vh]">
-          {/* Header Flutuante do Vídeo */}
+          {/* Floating Video Header */}
           <div className="absolute top-4 left-4 z-50 flex gap-2">
              <button 
-               onClick={() => navigate('/bots')} 
+               onClick={() => navigate(-1)} 
                className="bg-gray-800/80 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-gray-700 flex items-center gap-2 backdrop-blur-sm transition-all"
              >
-               <ArrowLeft size={14} /> Voltar
+               <ArrowLeft size={14} /> Back
              </button>
           </div>
 
-          {/* Componente Daily.co */}
+          {/* Daily.co Component */}
           <VideoCall 
             roomUrl={roomUrl} 
             onLeave={() => {
-              // Se sair da chamada, volta para a lista ou limpa a URL
+              // If leaving call, go back to list or clear URL
               setRoomUrl(null); 
             }} 
           />
         </div>
 
-        {/* Painel de Controles (Direita) */}
-        <div className="w-full h-[50vh] lg:w-[400px] lg:h-full border-t lg:border-t-0 lg:border-l border-gray-300 shadow-xl z-10">
+        {/* Control Panel (Right) */}
+        <div className="w-full h-[50vh] lg:w-[550px] lg:h-full border-t lg:border-t-0 lg:border-l border-gray-300 shadow-xl z-10">
           <RobotControl 
             thingCode={bot?.awsThingName} 
-            roomUrl={roomUrl} // Passamos a URL para o controle exibir se necessário
+            roomUrl={roomUrl} // We pass the URL to the control to display if necessary
           />
         </div>
         

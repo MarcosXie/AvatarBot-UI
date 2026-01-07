@@ -1,4 +1,5 @@
-import api, { callApi } from "./api";
+import type { BotUpdateDto } from "../types";
+import api from "./api";
 
 // Tipos baseados nos seus DTOs C#
 export interface BotCreateDto {
@@ -13,6 +14,7 @@ export interface BotResponseDto {
   name: string;
   code: string;
   roomUrl: string;
+  wifiPassword: string;
   modelId?: string;
   active: boolean;
   awsThingName: string;
@@ -23,16 +25,20 @@ export interface BotResponseDto {
 export const adminBotService = {
   // GET /api/Bot (Retorna todos)
   getAll: async () => {
-    return await callApi<BotResponseDto[]>(async () => 
-      await api.get('/api/Bot')
-    );
+    return (await api.get('/api/Bot')).data
   },
 
   // POST /api/Bot (Cria e retorna string do RedeemCode)
   create: async (data: BotCreateDto) => {
-    return await callApi<string>(async () => 
-      await api.post('/api/Bot', data)
-    );
+    return (await api.post('/api/Bot', data)).data
+  },
+
+  update: async (id: string, data: BotUpdateDto) => {
+    await api.put(`/api/Bot/${id}`, data);
+  },
+
+  delete: async (id: string) => {
+    await api.delete(`/api/Bot/${id}`);
   },
 
   // === NOVO: Download Sketch ===

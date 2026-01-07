@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import DailyIframe, { type DailyCall } from '@daily-co/daily-js';
 
 interface VideoCallProps {

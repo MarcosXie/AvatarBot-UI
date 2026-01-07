@@ -17,3 +17,13 @@ export interface User {
   name?: string;
   isAdmin: boolean | string;
 }
+
+export interface ForgotPasswordDto {
+  email: string;
+}
+
+export interface RedefinePasswordDto {
+  password: string;
+  confirmPassword: string;
+  code: string;
+}

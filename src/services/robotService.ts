@@ -1,23 +1,21 @@
 // src/services/robotService.ts
 import * as signalR from "@microsoft/signalr";
-import api, { callApi } from "./api"; // Importa a instância do Axios configurada
+import api from "./api"; 
 import type { BotListItem, BotResponse } from "../types";
 
-// Base URL do SignalR (precisa ser a raiz do backend, sem /api)
+// Base URL do SignalR
 const HUB_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || "https://localhost:7010";
 
 export const robotService = {
-  // Envia comando via HTTP POST usando nossa infraestrutura do Axios
-  sendCommand: async (thingCode: string, command: string, speed: number) => {
-    return await callApi(async () => {
-      return await api.post(`/api/command/${thingCode}`, {
-        command,
-        speed
-      });
+  // POST /api/command/{thingCode}
+  sendCommand: async (thingCode: string, command: string, speed: number): Promise<void> => {
+    await api.post(`/api/command/${thingCode}`, {
+      command,
+      speed
     });
   },
 
-  // Cria a conexão SignalR (Mantemos isso aqui pois é específico do Robô)
+  // Cria a conexão SignalR
   createSignalRConnection: (thingCode: string): signalR.HubConnection => {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(`${HUB_BASE_URL}/robotHub?thingCode=${thingCode}`)
@@ -27,23 +25,21 @@ export const robotService = {
     return connection;
   },
 
-  getBotsByUserId: async (userId: string) => {
-    // GET /api/Bot/my-bots/{userId}
-    return await callApi<BotListItem[]>(async () => 
-      await api.get(`/api/Bot/my-bots/${userId}`)
-    );
+  // GET /api/Bot/my-bots/{userId}
+getBotsByUserId: async (userId: string, isDemo: boolean = false): Promise<BotListItem[]> => {
+  const response = await api.get<BotListItem[]>(`/api/Bot/my-bots/${userId}`, {
+    params: { isDemo }
+  });
+  return response.data;
+},
+  // GET /api/Bot/{id}
+  getById: async (id: string): Promise<BotResponse> => {
+    const response = await api.get<BotResponse>(`/api/Bot/${id}`);
+    return response.data;
   },
 
-  getById: async (id: string): Promise<BotResponse | undefined> => {
-    return await callApi<BotResponse>(async () => 
-      await api.get(`/api/Bot/${id}`)
-    );
-  },
-
-  redeemBot: async (redeemCode: string, userId: string) => {
-    // POST /api/Bot/redeem/{redeemCode}/{userId}
-
-    return await api.post(`/api/Bot/redeem/${redeemCode}/${userId}`)
-
+  // POST /api/Bot/redeem/{redeemCode}/{userId}
+  redeemBot: async (redeemCode: string, userId: string): Promise<void> => {
+    await api.post(`/api/Bot/redeem/${redeemCode}/${userId}`);
   }
 };

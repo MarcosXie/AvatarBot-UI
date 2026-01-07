@@ -27,7 +27,7 @@ export default function ProtectedLayout() {
                 <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">
                   E
                 </div>
-                <span className="font-bold text-xl text-gray-800">AvatarBot</span>
+                <span className="font-bold text-xl text-gray-800">ExpoBot</span>
               </Link>
 
               {/* Navigation Links */}

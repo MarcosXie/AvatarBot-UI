@@ -14,7 +14,7 @@ export interface TelemetryData {
 }
 
 export interface SignalRMessage {
-  type: 'connection' | 'heartbeat' | 'status' | 'speed_update';
+  type: 'connection' | 'heartbeat' | 'status' | 'speed_update' | 'occupancy_update';
   thingCode?: string;
   timestamp?: string;
   status?: RobotStatus;
@@ -43,13 +43,22 @@ export interface BotListItem {
   isBotCallAvailable: boolean;
   active: boolean;
   awsThingName: string;
+  isRobotOnline: boolean;
+  isBusy: boolean;
+  rssi: number;
 }
 
 export interface BotResponse {
-  id: string; 
+  id: string;
   name: string;
-  code: string; 
-  roomUrl: string; 
+  code: string;
+  roomUrl: string;
   active: boolean;
   awsThingName: string;
+}
+
+export interface BotUpdateDto {
+  name: string;
+  wifiPassword: string;
+  modelId?: string | null;
 }

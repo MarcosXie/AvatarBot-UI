@@ -10,14 +10,16 @@ import { AdminRoute } from './components/AdminRoute'; // Novo componente
 
 // Pages - Public / User
 import HomePublic from './pages/HomePublic';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import Login from './pages/auth/Login';
 import BotList from './pages/BotList';
 import BotRoom from './pages/BotRoom';
 
 // Pages - Admin
 import AdminLogin from './pages/admin/AdminLogin'; // Nova página
 import AdminDevices from './pages/admin/AdminDevices';
+import VerifyEmail from './pages/auth/VerifyEmail';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import RedefinePassword from './pages/auth/RedefinePassword';
 
 // Componente para proteger rotas de USER
 function PrivateRoute({ children }: { children: JSX.Element }) {
@@ -28,57 +30,96 @@ function PrivateRoute({ children }: { children: JSX.Element }) {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <ToastContainer 
-          position="top-right"
-          autoClose={5000}
-          theme="colored"
-        />
+      {/* O basename garante que TUDO rode abaixo de /demo_expoapp */}
+      <BrowserRouter basename="/demo_expoapp">
+        <ToastContainer position="top-right" autoClose={5000} theme="colored" />
 
         <Routes>
-          {/* === ROTAS PÚBLICAS === */}
-          <Route path="/" element={<HomePublic />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          {/* Agrupador de Rotas Raiz */}
+          <Route path="/">
 
-          {/* === ROTA DE LOGIN ADMIN (Pública, mas separada) === */}
-          <Route path="/admin" element={<AdminLogin />} />
+            {/* === ROTAS PÚBLICAS === */}
+            <Route path="/" element={<HomePublic isDemo={true}  isExpoApp={true}/>} />
 
-          {/* === ÁREA DO USUÁRIO (Protegida) === */}
-          <Route element={<PrivateRoute><ProtectedLayout /></PrivateRoute>}>
-            <Route path="/dashboard" element={<Navigate to="/bots" replace />} />
-            <Route path="/bots" element={<BotList />} />
-          </Route>
+            <Route path="login" element={<Login isExpoApp={true} />} />
+            {/* <Route path="register" element={<Register />} /> */}
+            <Route path=":id/:code/verify_email" element={<VerifyEmail />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path=":id/:code/redefine_password" element={<RedefinePassword />} />
 
-          {/* Rota específica da sala (User) */}
-          <Route 
-            path="/room/:id" 
-            element={
-              <PrivateRoute>
-                <BotRoom />
-              </PrivateRoute>
-            } 
-          />
+            {/* === RESTANTE DAS ROTAS (USER/ADMIN) === */}
+            {/* Mantenha como estão, mas sem a "/" inicial nos paths internos se preferir, 
+                embora o react-router trate caminhos relativos automaticamente aqui */}
 
-          {/* === ÁREA ADMINISTRATIVA (Protegida por Claim) === */}
-          <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
-            {/* Redireciona raiz do admin para dashboard */}
-            <Route path="/admin/devices" element={<AdminDevices />} />
-            <Route path="/admin/dashboard" element={
-                // Crie um componente AdminDashboard simples depois
-                <div className="text-center mt-20">
-                    <h1 className="text-2xl font-bold text-gray-800">Bem-vindo, Administrador</h1>
-                    <p>Selecione uma opção no menu.</p>
-                </div>
+            <Route path="admin" element={<AdminLogin />} />
+
+            <Route element={<PrivateRoute><ProtectedLayout /></PrivateRoute>}>
+              <Route path="dashboard" element={<Navigate to="/bots" replace />} />
+              <Route path="bots" element={<BotList isDemo={true}/>} />
+            </Route>
+
+            <Route path="room/:id" element={
+              <PrivateRoute><BotRoom /></PrivateRoute>
             } />
-            
-            {/* Adicione outras rotas admin aqui: */}
-            {/* <Route path="/admin/users" element={<AdminUsersList />} /> */}
+
+            <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
+              <Route path="admin/devices" element={<AdminDevices />} />
+              <Route path="admin/dashboard" element={
+                <div className="text-center mt-20">
+                  <h1 className="text-2xl font-bold text-gray-800">Bem-vindo, Administrador</h1>
+                </div>
+              } />
+            </Route>
+
+            {/* Fallback 404 redireciona para a raiz do basename */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
+        </Routes>
+      </BrowserRouter>
 
-          {/* Fallback 404 */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+      <BrowserRouter basename="/demo">
+        <ToastContainer position="top-right" autoClose={5000} theme="colored" />
 
+        <Routes>
+          {/* Agrupador de Rotas Raiz */}
+          <Route path="/">
+
+            {/* === ROTAS PÚBLICAS === */}
+            <Route path="/" element={<HomePublic isDemo={true} isExpoApp={false}/>} />
+
+            <Route path="login" element={<Login isDemo={true} isExpoApp={false}/>} />
+            {/* <Route path="register" element={<Register />} /> */}
+            <Route path=":id/:code/verify_email" element={<VerifyEmail />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path=":id/:code/redefine_password" element={<RedefinePassword />} />
+
+            {/* === RESTANTE DAS ROTAS (USER/ADMIN) === */}
+            {/* Mantenha como estão, mas sem a "/" inicial nos paths internos se preferir, 
+                embora o react-router trate caminhos relativos automaticamente aqui */}
+
+            <Route path="admin" element={<AdminLogin />} />
+
+            <Route element={<PrivateRoute><ProtectedLayout /></PrivateRoute>}>
+              <Route path="dashboard" element={<Navigate to="/bots" replace />} />
+              <Route path="bots" element={<BotList isDemo={true}/>} />
+            </Route>
+
+            <Route path="room/:id" element={
+              <PrivateRoute><BotRoom /></PrivateRoute>
+            } />
+
+            <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
+              <Route path="admin/devices" element={<AdminDevices />} />
+              <Route path="admin/dashboard" element={
+                <div className="text-center mt-20">
+                  <h1 className="text-2xl font-bold text-gray-800">Bem-vindo, Administrador</h1>
+                </div>
+              } />
+            </Route>
+
+            {/* Fallback 404 redireciona para a raiz do basename */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </AuthProvider>

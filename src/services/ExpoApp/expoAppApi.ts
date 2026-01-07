@@ -1,9 +1,9 @@
 // src/services/api.ts
 import axios from 'axios';
-import { getToken } from '../helpers/UserHelper';
+import { getToken } from '../../helpers/UserHelper';
 
 // Lê do .env (Vite usa import.meta.env)
-const backendUrl = import.meta.env.VITE_BACKEND_API_URL || "https://localhost:7010";
+const backendUrl = import.meta.env.VITE_EXPOAPP_BACKEND_API_URL || "https://localhost:7010";
 
 export interface BaseError {
     message: string;
@@ -35,7 +35,8 @@ api.interceptors.response.use(
             // Backend às vezes manda string pura no body ou um objeto ProblemDetails
             const errorMessage = typeof error.response.data === 'string' 
                 ? error.response.data 
-                : error.response.data.title || error.response.data.Message || "unknown error";
+                : error.response.data.title || error.response.data.Message || "Erro desconhecido";
+
             const customError: BaseError = {
                 message: errorMessage,
                 statusCode: error.response.status
@@ -45,5 +46,6 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
 
 export default api;
